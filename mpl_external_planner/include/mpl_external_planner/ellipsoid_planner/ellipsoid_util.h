@@ -6,6 +6,7 @@
 #define MPL_ELLIPSOID_UTIL_H
 #include <mpl_external_planner/ellipsoid_planner/primitive_ellipsoid_utils.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <mpl_basis/full_waypoint.h>
 
 #include <boost/make_shared.hpp>
 
@@ -45,7 +46,7 @@ class EllipsoidUtil {
     Vs.add(
         Hyperplane3D(ori + Vec3f(dim(0) / 2, 0, dim(2) / 2), -Vec3f::UnitY()));
     Vs.add(
-        Hyperplane3D(ori + Vec3f(dim(0) / 2, dim(2) / 2, 0), -Vec3f::UnitZ()));
+        Hyperplane3D(ori + Vec3f(dim(0) / 2, dim(1) / 2, 0), -Vec3f::UnitZ()));
     Vs.add(Hyperplane3D(ori + dim - Vec3f(0, dim(1) / 2, dim(2) / 2),
                         Vec3f::UnitX()));
     Vs.add(Hyperplane3D(ori + dim - Vec3f(dim(0) / 2, 0, dim(2) / 2),
@@ -66,7 +67,8 @@ class EllipsoidUtil {
     }
     decimal_t max_v =
         std::max(std::max(pr.max_vel(0), pr.max_vel(1)), pr.max_vel(2));
-    int n = std::ceil(max_v * pr.t() / axe_(0));
+//    int n = std::ceil(max_v * pr.t() / axe_(0));
+    int n = 2*std::ceil(max_v * pr.t() / axe_(0));
     auto Es = sample_ellipsoids(pr, axe_, n);
 
     for (const auto &E : Es) {
@@ -79,6 +81,13 @@ class EllipsoidUtil {
       searchPoint.y = E.d()(1);
       searchPoint.z = E.d()(2);
 
+      if (std::isinf(searchPoint.x) || std::isnan(searchPoint.x) ||
+          std::isinf(searchPoint.y) || std::isnan(searchPoint.y) ||
+          std::isinf(searchPoint.z) || std::isnan(searchPoint.z))
+      {
+        return false;
+      }
+
       if (kdtree_.radiusSearch(searchPoint, radius, pointIdxRadiusSearch,
                                pointRadiusSquaredDistance) > 0) {
         for (size_t i = 0; i < pointIdxRadiusSearch.size(); ++i)
@@ -88,7 +97,38 @@ class EllipsoidUtil {
 
     return true;
   }
-  /// Convert obstacle points into pcl point cloud
+
+  /// Check if the pose is inside the SFC
+  bool isFree(const FullWaypoint3D& state) {
+
+    auto E = generate_ellipsoid(axe_, state);
+
+    float radius = axe_(0);
+    pcl::PointXYZ searchPoint;
+    std::vector<int> pointIdxRadiusSearch;
+    std::vector<float> pointRadiusSquaredDistance;
+
+    searchPoint.x = E.d()(0);
+    searchPoint.y = E.d()(1);
+    searchPoint.z = E.d()(2);
+
+    if (std::isinf(searchPoint.x) || std::isnan(searchPoint.x) ||
+        std::isinf(searchPoint.y) || std::isnan(searchPoint.y) ||
+        std::isinf(searchPoint.z) || std::isnan(searchPoint.z))
+    {
+      return false;
+    }
+
+    if (kdtree_.radiusSearch(searchPoint, radius, pointIdxRadiusSearch,
+                             pointRadiusSquaredDistance) > 0) {
+      for (size_t i = 0; i < pointIdxRadiusSearch.size(); ++i)
+        if (E.inside(Vec3f(obs_[pointIdxRadiusSearch[i]]))) return false;
+    }
+
+    return true;
+  }
+
+    /// Convert obstacle points into pcl point cloud
   PCLPointCloud toPCL(const vec_Vec3f &obs) {
     PCLPointCloud cloud;
     cloud.width = obs.size();
