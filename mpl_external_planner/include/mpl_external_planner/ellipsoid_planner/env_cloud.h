@@ -14,10 +14,10 @@ namespace MPL {
  * @brief Point cloud environment
  */
 class env_cloud : public env_base<3> {
- protected:
+// protected:
+ public:
   std::unique_ptr<EllipsoidUtil> map_util_;
 
- public:
   /// Simple constructor
   env_cloud() {}
   /// Simple constructor
@@ -59,6 +59,11 @@ class env_cloud : public env_base<3> {
     for (int i = 0; i < (int)U_.size(); i++) {
       Primitive3D pr(curr, U_[i], dt_);
       Waypoint3D tn = pr.evaluate(dt_);
+//      std::cout << "Succ #" << i
+//                << " tn==curr? " << (tn == curr)
+//                << " primitive valid? " << !validate_primitive(pr, v_max_, a_max_, j_max_)
+//                << " is coll free? " << !map_util_->isFree(pr) << std::endl;
+
       if (tn == curr || !validate_primitive(pr, v_max_, a_max_, j_max_) ||
           !map_util_->isFree(pr))
         continue;
