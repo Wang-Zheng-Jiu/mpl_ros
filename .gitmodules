@@ -3,4 +3,4 @@
 	url = https://github.com/nrkumar93/motion_primitive_library
 [submodule "DecompROS"]
 	path = DecompROS
-	url = https://github.com/sikang/DecompROS.git
+	url = https://github.com/nrkumar93/DecompROS
