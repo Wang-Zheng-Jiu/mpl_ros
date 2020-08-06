@@ -7,6 +7,14 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated-declarations")
 
+set(MOTION_PRIMITIVE_LIBRARY_INCLUDE_DIRS "../motion_primitive_library/include")
+set(DECOMP_UTIL_INCLUDE_DIRS "../DecompROS/DecompUtil/include")
+
+set(MOTION_PRIMITIVE_LIBRARY_LIBRARIES
+  "../../../../devel/lib/libpoly_solver.so"
+  "../../../../devel/lib/libmap_planner.so")
+
+
 execute_process(COMMAND lsb_release -cs
     OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
 )
@@ -21,8 +29,8 @@ endif()
 find_package(catkin_simple REQUIRED)
 find_package(cmake_modules REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(motion_primitive_library REQUIRED)
-find_package(decomp_util REQUIRED)
+#find_package(motion_primitive_library REQUIRED)
+#find_package(decomp_util REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR} ${MOTION_PRIMITIVE_LIBRARY_INCLUDE_DIRS} ${DECOMP_UTIL_INCLUDE_DIRS})
 
 catkin_simple()

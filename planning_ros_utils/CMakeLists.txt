@@ -1,13 +1,22 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(planning_ros_utils)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-deprecated-declarations")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-deprecated-declarations")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+set(MOTION_PRIMITIVE_LIBRARY_INCLUDE_DIRS "../motion_primitive_library/include")
+
+set(MOTION_PRIMITIVE_LIBRARY_LIBRARIES
+  "/home/gaussian/cmu_ri_phd/phd_research/csbpl_ros/devel/lib/libpoly_solver.so"
+  "/home/gaussian/cmu_ri_phd/phd_research/csbpl_ros/devel/lib/libmap_planner.so")
+
+
 find_package(catkin REQUIRED COMPONENTS rviz roscpp)
 find_package(catkin_simple REQUIRED)
 find_package(cmake_modules)
 find_package(Eigen3 REQUIRED)
 find_package(VTK REQUIRED)
-find_package(motion_primitive_library REQUIRED)
+#find_package(motion_primitive_library REQUIRED)
 find_package(SDL REQUIRED)
 find_package(SDL_image REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIRS} ${MOTION_PRIMITIVE_LIBRARY_INCLUDE_DIRS})
