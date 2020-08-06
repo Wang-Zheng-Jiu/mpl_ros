@@ -3,12 +3,24 @@
 #include <planning_ros_utils/data_ros_utils.h>
 #include <planning_ros_utils/primitive_ros_utils.h>
 #include <ros/ros.h>
+#include <ros/package.h>
 
 #include "bag_reader.hpp"
 
+double fRand(double fMin, double fMax)
+{
+  double f = (double)rand() / RAND_MAX;
+  return fMin + f * (fMax - fMin);
+}
+
+
 int main(int argc, char **argv) {
+  /* initialize random seed: */
+  srand (time(NULL));
+
   ros::init(argc, argv, "test");
-  ros::NodeHandle nh("~");
+//  ros::NodeHandle nh("~");
+  ros::NodeHandle nh("/test_primitive");
 
   ros::Publisher es_pub =
       nh.advertise<decomp_ros_msgs::EllipsoidArray>("ellipsoids", 1, true);
@@ -27,6 +39,11 @@ int main(int argc, char **argv) {
   std::string file_name, topic_name;
   nh.param("file", file_name, std::string("voxel_map"));
   nh.param("topic", topic_name, std::string("voxel_map"));
+
+  /// DEBUG
+  file_name = "/home/gaussian/cmu_ri_phd/phd_misc/collab/icra_2020/code/src/mpl_ros/mpl_test_node/maps/office/office.bag";
+  topic_name = "/cloud";
+
   sensor_msgs::PointCloud map =
       read_bag<sensor_msgs::PointCloud>(file_name, topic_name, 0).back();
   cloud_pub.publish(map);
@@ -40,6 +57,14 @@ int main(int argc, char **argv) {
   nh.param("range_x", dim(0), 0.0);
   nh.param("range_y", dim(1), 0.0);
   nh.param("range_z", dim(2), 0.0);
+
+  /// DEBUG
+  origin(0) = 6.0;
+  origin(1) = 12.0;
+  origin(2) = 0.0;
+  dim(0) = 50.0;
+  dim(1) = 45.0;
+  dim(2) = 1.5;
 
   ROS_INFO("Takse %f sec to set up map!", (ros::Time::now() - t0).toSec());
   t0 = ros::Time::now();
@@ -59,6 +84,18 @@ int main(int argc, char **argv) {
   nh.param("num", num, 1);
   nh.param("max_num", max_num, -1);
   nh.param("use_3d", use_3d, false);
+
+  /// DEBUG
+  dt = 0.2;
+  epsilon = 10;
+  v_max = 10.0;
+  a_max = 10.0;
+  u_max = 60.0;
+  u_max_z = 1.0;
+  w = 10000;
+  num = 2;
+  max_num = -1;
+  use_3d = false;
 
   std::unique_ptr<MPL::EllipsoidPlanner> planner_;
   planner_.reset(new MPL::EllipsoidPlanner(true));
@@ -92,6 +129,23 @@ int main(int argc, char **argv) {
   nh.param("use_acc", use_acc, true);
   nh.param("use_jrk", use_jrk, true);
 
+  start_x = 8.0;
+  start_y = 13.0;
+//  start_x = 14.0;
+//  start_y = 28.0;
+  start_z = 1.3;
+  start_vx = 0.0;
+  start_vy = 0.0;
+  start_vz = 0.0;
+  goal_x = 28.5;
+  goal_y = 14.0;
+//  goal_x = 9.92;
+//  goal_y = 26.88;
+  goal_z = 1.3;
+  use_acc = true;
+  use_jrk = false;
+
+
   Waypoint3D start;
   start.pos = Vec3f(start_x, start_y, start_z);
   start.vel = Vec3f(start_vx, start_vy, start_vz);
@@ -109,12 +163,26 @@ int main(int argc, char **argv) {
   goal.acc = Vec3f(0, 0, 0);
   goal.jrk = Vec3f(0, 0, 0);
 
+
+//  start.pos = Vec3f(fRand(7, 48), fRand(1,44), start_z);
+//  goal.pos = Vec3f(fRand(7, 48), fRand(1,44), goal_z);
+//  while (!planner_->ENV_->is_free(start.pos) &&
+//         !planner_->ENV_->is_free(goal.pos))
+//  {
+//    std::cout << start.pos << std::endl;
+//    std::cout << goal.pos << std::endl;
+//    start.pos = Vec3f(fRand(7, 48), fRand(1,44), start_z);
+//    goal.pos = Vec3f(fRand(7, 48), fRand(1,44), goal_z);
+//  }
+//  std::cout << start.pos << std::endl;
+//  std::cout << goal.pos << std::endl;
+
   // Publish location of start and goal
   sensor_msgs::PointCloud sg_cloud;
   sg_cloud.header.frame_id = "map";
   geometry_msgs::Point32 pt1, pt2;
-  pt1.x = start_x, pt1.y = start_y, pt1.z = start_z;
-  pt2.x = goal_x, pt2.y = goal_y, pt2.z = goal_z;
+  pt1.x = start.pos(0), pt1.y = start.pos(1), pt1.z = start.pos(2);
+  pt2.x = goal.pos(0), pt2.y = goal.pos(1), pt2.z = goal.pos(2);
   sg_cloud.points.push_back(pt1), sg_cloud.points.push_back(pt2);
   sg_pub.publish(sg_cloud);
 
@@ -155,7 +223,7 @@ int main(int argc, char **argv) {
         U.push_back(Vec3f(dx, dy, 0));
   }
   planner_->setU(U);  // Set discretization with 1 and efforts
-  // planner_->setMode(num, use_3d, start); // Set discretization with 1 and
+//   planner_->setMode(num, use_3d, start); // Set discretization with 1 and
   // efforts
   // Planning thread!
 
